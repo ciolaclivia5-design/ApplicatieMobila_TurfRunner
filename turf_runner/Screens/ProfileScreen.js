@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Theme, { Colors, Avatar } from '../components/Theme';
+import { API_BASE_URL } from '../config/api';
 
 const ProfileScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
@@ -41,7 +42,7 @@ const ProfileScreen = ({ navigation }) => {
       const token = await AsyncStorage.getItem('userToken');
       if (!token) return navigation.replace('Login');
 
-      const response = await fetch('http://10.0.2.2:3000/profile', {
+      const response = await fetch(`${API_BASE_URL}/profile`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +77,7 @@ const ProfileScreen = ({ navigation }) => {
     setSaving(true);
     try {
       const token = await AsyncStorage.getItem('userToken');
-      const response = await fetch('http://10.0.2.2:3000/profile', {
+      const response = await fetch(`${API_BASE_URL}/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

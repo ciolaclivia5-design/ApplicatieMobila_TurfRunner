@@ -3,6 +3,7 @@ import { Text, StyleSheet, TouchableOpacity, View, TextInput, Alert, ActivityInd
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import Theme, { Colors } from '../components/Theme';
+import { API_BASE_URL } from '../config/api';
 
 const LoginScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -18,7 +19,7 @@ const LoginScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://10.0.2.2:3000/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

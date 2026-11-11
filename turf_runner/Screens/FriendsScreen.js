@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { neighborhoods } from '../data/neighborhoods';
 import Theme, { Colors, Avatar } from '../components/Theme';
+import { API_BASE_URL } from '../config/api';
 
 const getAuthHeaders = async () => {
     const token = await AsyncStorage.getItem('userToken');
@@ -35,8 +36,8 @@ const FriendsScreen = () => {
 
     try {
       const [friendsRes, requestsRes] = await Promise.all([
-        fetch('http://10.0.2.2:3000/friends', { method: 'GET', headers }),
-        fetch('http://10.0.2.2:3000/friends/requests', { method: 'GET', headers })
+        fetch(`${API_BASE_URL}/friends`, { method: 'GET', headers }),
+        fetch(`${API_BASE_URL}/friends/requests`, { method: 'GET', headers })
       ]);
 
       const friendsData = await friendsRes.json();
@@ -74,7 +75,7 @@ const FriendsScreen = () => {
     if (!headers) return setAdding(false);
 
     try {
-      const response = await fetch('http://10.0.2.2:3000/friends', {
+      const response = await fetch(`${API_BASE_URL}/friends`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ friend_name: newFriendName }),
@@ -109,7 +110,7 @@ const FriendsScreen = () => {
             const headers = await getAuthHeaders();
             if (!headers) return;
             try {
-              const response = await fetch(`http://10.0.2.2:3000/friends/${friendId}`, { method: 'DELETE', headers });
+              const response = await fetch(`${API_BASE_URL}/friends/${friendId}`, { method: 'DELETE', headers });
               if (response.ok) fetchData(); 
               else Alert.alert('Error', 'Deletion failed.');
             } catch (error) {
@@ -127,7 +128,7 @@ const FriendsScreen = () => {
     const endpoint = action === 'accept' ? 'accept' : 'reject';
 
     try {
-      const response = await fetch(`http://10.0.2.2:3000/friends/${endpoint}`, {
+      const response = await fetch(`${API_BASE_URL}/friends/${endpoint}`, {
         method: 'POST',
         headers,
         body: JSON.stringify(action === 'accept' ? { sender_id: senderId } : { target_id: senderId }),
@@ -148,7 +149,7 @@ const FriendsScreen = () => {
     if (!headers) return;
 
     try {
-      const resp = await fetch(`http://10.0.2.2:3000/friends/${friendId}/details`, { method: 'GET', headers });
+      const resp = await fetch(`${API_BASE_URL}/friends/${friendId}/details`, { method: 'GET', headers });
       const data = await resp.json();
       if (!resp.ok) return Alert.alert('Error', data.error);
 

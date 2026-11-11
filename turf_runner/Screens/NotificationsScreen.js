@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Theme from '../components/Theme';
-
-const API_BASE = 'http://10.0.2.2:3000';
+import { API_BASE_URL } from '../config/api';
 
 const NotificationsScreen = () => {
   const [items, setItems] = useState([]);
@@ -22,7 +21,7 @@ const NotificationsScreen = () => {
       }
       
       console.log('Fetching notifications...');
-      const res = await fetch(`${API_BASE}/notifications`, { 
+      const res = await fetch(`${API_BASE_URL}/notifications`, {
         headers: { Authorization: `Bearer ${token}` } 
       });
       
@@ -56,7 +55,7 @@ const NotificationsScreen = () => {
       const token = await AsyncStorage.getItem('userToken');
       if (!token) return;
       
-      await fetch(`${API_BASE}/notifications/mark-read`, {
+      await fetch(`${API_BASE_URL}/notifications/mark-read`, {
         method: 'POST', 
         headers: { 
           'Content-Type': 'application/json', 

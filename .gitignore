@@ -23,6 +23,13 @@ coverage/
 *.swo
 *~
 
+**/node_modules/
+**/Pods/
+**/build/
+**/xcuserdata/
+**/.xcode.env*.local
+**/.DS_Store
+
 # OS
 .DS_Store
 Thumbs.db

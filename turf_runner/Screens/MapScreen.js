@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { StyleSheet, View, ActivityIndicator, Platform, PermissionsAndroid, Text, TouchableOpacity, Modal } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Platform, Text, TouchableOpacity, Modal } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Polyline, Polygon } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,9 +7,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import { neighborhoods } from '../data/neighborhoods';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import Theme, { Colors, Avatar } from '../components/Theme';
+import { API_BASE_URL } from '../config/api';
+import { requestLocationPermission } from '../config/location';
 
 const MapScreen = ({ navigation }) => {
   const [location, setLocation] = useState(null);
+  const [locationError, setLocationError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isTracking, setIsTracking] = useState(false);
   const [route, setRoute] = useState([]);
@@ -29,7 +32,7 @@ const MapScreen = ({ navigation }) => {
       const token = await AsyncStorage.getItem('userToken');
       if (!token) return;
 
-      const response = await fetch('http://10.0.2.2:3000/location/map-state', {
+      const response = await fetch(`${API_BASE_URL}/location/map-state`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -90,7 +93,7 @@ const MapScreen = ({ navigation }) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (token) {
-        const resp = await fetch(`http://10.0.2.2:3000/location/neighborhood/${neighborhoodId}`, {
+        const resp = await fetch(`${API_BASE_URL}/location/neighborhood/${neighborhoodId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (resp.ok) {
@@ -150,24 +153,19 @@ const MapScreen = ({ navigation }) => {
   };
 
   useEffect(() => {
-    const requestLocationPermission = async () => {
-      if (Platform.OS === 'android') {
-        try {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-          );
-          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-            setLoading(false); return;
-          }
-        } catch (err) {
-          console.warn(err); setLoading(false); return;
-        }
+    const initializeLocation = async () => {
+      const granted = await requestLocationPermission();
+      if (!granted) {
+        setLocationError('Location permission was denied. Enable Location access in Settings.');
+        setLoading(false);
+        return;
       }
 
       Geolocation.getCurrentPosition(
         (position) => {
           const coords = { latitude: position.coords.latitude, longitude: position.coords.longitude };
           setLocation(coords);
+          setLocationError(null);
           setCurrentRegion({
             latitude: coords.latitude,
             longitude: coords.longitude,
@@ -176,12 +174,16 @@ const MapScreen = ({ navigation }) => {
           });
           setLoading(false);
         },
-        (error) => { console.log(error); setLoading(false); },
+        (error) => {
+          console.warn('Unable to get current location:', error);
+          setLocationError(error.message || 'Unable to get current location.');
+          setLoading(false);
+        },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
       );
     };
 
-    requestLocationPermission();
+    initializeLocation();
   }, []);
 
   useEffect(() => {
@@ -195,7 +197,7 @@ const MapScreen = ({ navigation }) => {
           const headers = await getAuthHeaders();
           if (headers) {
             try {
-              const response = await fetch('http://10.0.2.2:3000/location/track', {
+              const response = await fetch(`${API_BASE_URL}/location/track`, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({
@@ -243,7 +245,7 @@ const MapScreen = ({ navigation }) => {
       const headers = await getAuthHeaders();
       if (headers && sessionId) {
         try {
-          await fetch('http://10.0.2.2:3000/location/stop-session', {
+          await fetch(`${API_BASE_URL}/location/stop-session`, {
             method: 'POST', headers, body: JSON.stringify({ sessionId })
           });
         } catch (error) { console.error(error); }
@@ -262,7 +264,7 @@ const MapScreen = ({ navigation }) => {
       const headers = await getAuthHeaders();
       if (headers) {
         try {
-          const response = await fetch('http://10.0.2.2:3000/location/start-session', {
+          const response = await fetch(`${API_BASE_URL}/location/start-session`, {
             method: 'POST', headers
           });
           const data = await response.json();
@@ -281,13 +283,13 @@ const MapScreen = ({ navigation }) => {
   };
 
   if (loading) return <View style={styles.container}><ActivityIndicator size="large" color="#ffffff"/></View>;
-  if (!location) return <View style={styles.container}><Text style={styles.text}>Unable to get location</Text></View>;
+  if (!location) return <View style={styles.container}><Text style={styles.text}>{locationError || 'Unable to get location'}</Text></View>;
 
   return (
     <View style={styles.container}>
       <MapView
         ref={mapRef}
-        provider={PROVIDER_GOOGLE}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         style={styles.map}
         initialRegion={{
           latitude: location.latitude,

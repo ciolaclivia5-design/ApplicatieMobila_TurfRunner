@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { neighborhoods } from '../data/neighborhoods';
 import Theme, { Colors, Avatar } from '../components/Theme';
+import { API_BASE_URL } from '../config/api';
 
 const LeaderboardScreen = () => {
   const [data, setData] = useState([]);
@@ -13,8 +14,7 @@ const LeaderboardScreen = () => {
 
   const fetchLeaderboard = async () => {
     try {
-      // Use 10.0.2.2 for Android emulator to access local backend
-      const response = await fetch('http://10.0.2.2:3000/leaderboard'); 
+      const response = await fetch(`${API_BASE_URL}/leaderboard`);
       const json = await response.json();
       setData(json);
     } catch (error) {

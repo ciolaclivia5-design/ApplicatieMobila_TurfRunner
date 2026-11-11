@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+
+DEVELOPER_DIR="$(/usr/bin/xcode-select -p)"
+SIMULATOR_APP="$DEVELOPER_DIR/Applications/Simulator.app"
+DEVICE_HUB_APP="$DEVELOPER_DIR/../Applications/DeviceHub.app"
+
+if [ "${1:-}" = "$SIMULATOR_APP" ] && [ ! -d "$SIMULATOR_APP" ] && [ -d "$DEVICE_HUB_APP" ]; then
+  exec /usr/bin/open "$DEVICE_HUB_APP"
+fi
+
+exec /usr/bin/open "$@"

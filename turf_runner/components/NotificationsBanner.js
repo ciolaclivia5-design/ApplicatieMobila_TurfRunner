@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Theme from './Theme';
 import { navigate } from '../RootNavigation';
+import { API_BASE_URL } from '../config/api';
 
 const POLL_INTERVAL_MS = 4000; // Faster polling
-const API_BASE = 'http://10.0.2.2:3000';
 
 const NotificationsBanner = () => {
   const [notif, setNotif] = useState(null);
@@ -25,7 +25,7 @@ const NotificationsBanner = () => {
       // Instead, we can just fetch and if we have 'notif' skip animation or queuing.
       // Let's keep it simple: Fetch. If data exists, show it.
       
-      const res = await fetch(`${API_BASE}/notifications`, {
+      const res = await fetch(`${API_BASE_URL}/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;
@@ -66,7 +66,7 @@ const NotificationsBanner = () => {
         try {
             const token = await AsyncStorage.getItem('userToken');
             if (token) {
-                await fetch(`${API_BASE}/notifications/mark-read`, {
+                await fetch(`${API_BASE_URL}/notifications/mark-read`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                     body: JSON.stringify({ id })

@@ -3,6 +3,7 @@ import { Text, StyleSheet, TouchableOpacity, View, TextInput, Alert, ActivityInd
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import Theme, { Colors } from '../components/Theme';
+import { API_BASE_URL } from '../config/api';
 
 const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -24,7 +25,7 @@ const RegisterScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-        const registrationUrl = 'http://10.0.2.2:3000/auth/register';
+        const registrationUrl = `${API_BASE_URL}/auth/register`;
         const payload = { name, email, password };
         
         const response = await fetch(registrationUrl, {
@@ -36,7 +37,9 @@ const RegisterScreen = ({ navigation }) => {
         const data = await response.json();
 
         if (response.ok) {
-            Alert.alert('Success', 'Registration successful! Please log in.');
+            await AsyncStorage.setItem('userToken', data.token);
+            await AsyncStorage.setItem('userId', data.user.id.toString());
+            Alert.alert('Success', 'Registration successful! You are now logged in.');
             navigation.replace('MainTabs'); 
         } else {
             Alert.alert('Error', data.error || 'Registration failed');

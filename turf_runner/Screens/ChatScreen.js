@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   StyleSheet, View, Text, FlatList, TextInput, TouchableOpacity, 
   KeyboardAvoidingView, Platform, ActivityIndicator, ImageBackground 
@@ -10,6 +10,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { neighborhoods } from '../data/neighborhoods';
 import Theme, { Colors, Avatar } from '../components/Theme';
+import { API_BASE_URL } from '../config/api';
+import { requestLocationPermission } from '../config/location';
 
 const ChatScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -20,46 +22,10 @@ const ChatScreen = ({ navigation }) => {
   const [userId, setUserId] = useState(null);
   const flatListRef = useRef();
 
-  useEffect(() => {
-    AsyncStorage.getItem('userId').then(id => setUserId(parseInt(id)));
-    
-    checkLocationAndFetch();
-
-    const interval = setInterval(checkLocationAndFetch, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const checkLocationAndFetch = () => {
-    Geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const found = neighborhoods.find(n => 
-          isPointInPolygon({ latitude, longitude }, n.coordinates)
-        );
-        
-        if (found && found.id !== currentNeighborhood?.id) {
-            setCurrentNeighborhood(found);
-            fetchMessages(found.id);
-        } else if (!found) {
-            setCurrentNeighborhood(null);
-        } else if (found) {
-            fetchMessages(found.id);
-        }
-        setLoading(false);
-      },
-      (error) => {
-        console.log(error);
-        setLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 5000 }
-    );
-  };
-
-  const fetchMessages = async (hoodId) => {
+  const fetchMessages = useCallback(async (hoodId) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      // Use 10.0.2.2 for Android -> Localhost
-      const res = await fetch(`http://10.0.2.2:3000/chat/${hoodId}`, {
+      const res = await fetch(`${API_BASE_URL}/chat/${hoodId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -67,7 +33,57 @@ const ChatScreen = ({ navigation }) => {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
+
+  const checkLocationAndFetch = useCallback(() => {
+    Geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const found = neighborhoods.find(n =>
+          isPointInPolygon({ latitude, longitude }, n.coordinates)
+        );
+
+        if (found && found.id !== currentNeighborhood?.id) {
+          setCurrentNeighborhood(found);
+          fetchMessages(found.id);
+        } else if (!found) {
+          setCurrentNeighborhood(null);
+        } else {
+          fetchMessages(found.id);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.log(error);
+        setLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  }, [currentNeighborhood, fetchMessages]);
+
+  useEffect(() => {
+    AsyncStorage.getItem('userId').then(id => setUserId(parseInt(id)));
+
+    let interval;
+    let cancelled = false;
+    const initializeLocation = async () => {
+      const granted = await requestLocationPermission();
+      if (cancelled) return;
+      if (!granted) {
+        setLoading(false);
+        return;
+      }
+
+      checkLocationAndFetch();
+      interval = setInterval(checkLocationAndFetch, 3000);
+    };
+    initializeLocation();
+
+    return () => {
+      cancelled = true;
+      if (interval) clearInterval(interval);
+    };
+  }, [checkLocationAndFetch]);
 
   const sendMessage = async () => {
     if (inputText.trim().length === 0 || !currentNeighborhood) return;
@@ -77,7 +93,7 @@ const ChatScreen = ({ navigation }) => {
 
     try {
       const token = await AsyncStorage.getItem('userToken');
-      await fetch(`http://10.0.2.2:3000/chat/${currentNeighborhood.id}`, {
+      await fetch(`${API_BASE_URL}/chat/${currentNeighborhood.id}`, {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}`,

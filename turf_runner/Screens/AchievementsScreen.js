@@ -3,8 +3,7 @@ import { View, Text, FlatList, StyleSheet, ActivityIndicator, StatusBar, Touchab
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import Theme, { Colors } from '../components/Theme';
-
-const API_BASE = 'http://10.0.2.2:3000';
+import { API_BASE_URL } from '../config/api';
 
 const AchievementsScreen = () => {
   const [items, setItems] = useState([]);
@@ -18,7 +17,7 @@ const AchievementsScreen = () => {
       const token = await AsyncStorage.getItem('userToken');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const resAll = await fetch(`${API_BASE}/achievements`);
+      const resAll = await fetch(`${API_BASE_URL}/achievements`);
       if (!resAll.ok) {
         let errMsg = `Status ${resAll.status}`;
         try {
@@ -36,8 +35,8 @@ const AchievementsScreen = () => {
       
       if (token) {
         const [resMine, resProfile] = await Promise.all([
-             fetch(`${API_BASE}/achievements/me`, { headers }),
-             fetch(`${API_BASE}/profile`, { headers })
+             fetch(`${API_BASE_URL}/achievements/me`, { headers }),
+             fetch(`${API_BASE_URL}/profile`, { headers })
         ]);
         if (resMine.ok) mineData = await resMine.json();
         if (resProfile.ok) profileData = await resProfile.json();
