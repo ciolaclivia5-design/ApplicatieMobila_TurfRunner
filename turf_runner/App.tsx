@@ -12,10 +12,8 @@ import ProfileScreen from './Screens/ProfileScreen';
 import FriendsScreen from './Screens/FriendsScreen'; 
 import LeaderboardScreen from './Screens/LeaderboardScreen';
 import ChatScreen from './Screens/ChatScreen'; // <--- Import Chat
-import NotificationsBanner from './components/NotificationsBanner';
 import AchievementsScreen from './Screens/AchievementsScreen';
 import NotificationsScreen from './Screens/NotificationsScreen';
-import { navigationRef } from './RootNavigation';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator(); 
@@ -92,8 +90,7 @@ const MainTabs = () => {
 
 const App = () => (
   <SafeAreaProvider>
-    <NotificationsBanner />
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer>
       <Stack.Navigator
         initialRouteName="Welcome"
         screenOptions={{
@@ -113,11 +110,16 @@ const App = () => (
             options={{ 
                 headerShown: true,
                 title: 'Leaderboard',
+                headerBackButtonDisplayMode: 'minimal',
                 headerStyle: { backgroundColor: '#0f3460' },
                 headerTintColor: '#fff'
             }}
         />
-        <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
+        <Stack.Screen
+          name="Notifications"
+          component={NotificationsScreen}
+          options={{ title: 'Notifications', headerBackButtonDisplayMode: 'minimal' }}
+        />
         
         <Stack.Screen 
           name="Achievements" 
@@ -125,6 +127,7 @@ const App = () => (
           options={{ 
             headerShown: true,
             title: 'Achievements', 
+            headerBackButtonDisplayMode: 'minimal',
             headerStyle: { backgroundColor: '#0f3460' },
             headerTintColor: '#fff'
           }}

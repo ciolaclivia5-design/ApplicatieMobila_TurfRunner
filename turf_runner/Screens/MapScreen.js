@@ -4,13 +4,16 @@ import MapView, { PROVIDER_GOOGLE, Polyline, Polygon } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { neighborhoods } from '../data/neighborhoods';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Theme, { Colors, Avatar } from '../components/Theme';
 import { API_BASE_URL } from '../config/api';
 import { requestLocationPermission } from '../config/location';
 
 const MapScreen = ({ navigation }) => {
+  const controlsTop = useSafeAreaInsets().top + 10;
   const [location, setLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -318,7 +321,7 @@ const MapScreen = ({ navigation }) => {
         )}
       </MapView>
 
-      <View style={styles.zoomControls}>
+      <View style={[styles.zoomControls, { top: controlsTop + 20 }]}>
         <TouchableOpacity style={styles.zoomButton} onPress={handleZoomIn}>
           <Text style={styles.zoomButtonText}>+</Text>
         </TouchableOpacity>
@@ -356,23 +359,35 @@ const MapScreen = ({ navigation }) => {
         </View>
       </Modal>
 
-      <TouchableOpacity 
-        style={styles.leaderboardButtonTopLeft} 
-        onPress={() => navigation.navigate('Leaderboard')}
-      >
-        <Icon name="trophy" size={24} color="#fff" />
-      </TouchableOpacity>
+      <View pointerEvents="box-none" style={[styles.mapShortcuts, { top: controlsTop }]}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Leaderboard"
+          style={styles.shortcutButton}
+          onPress={() => navigation.navigate('Leaderboard')}
+        >
+          <Icon name="trophy" size={24} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Notifications"
+          style={styles.shortcutButton}
+          onPress={() => navigation.navigate('Notifications')}
+        >
+          <Ionicons name="notifications" size={24} color="#fff" />
+        </TouchableOpacity>
 
-      {isTracking && (
-        <View style={styles.statsContainerTopLeft}>
-          <Text style={styles.statsText}>
-            Distance: {distance >= 1000 ? `${(distance / 1000).toFixed(2)} km` : `${distance.toFixed(0)} m`}
-          </Text>
-          <Text style={styles.statsText}>
-            Steps: {steps.toLocaleString()}
-          </Text>
-        </View>
-      )}
+        {isTracking && (
+          <View style={styles.trackingStats}>
+            <Text style={styles.statsText}>
+              Distance: {distance >= 1000 ? `${(distance / 1000).toFixed(2)} km` : `${distance.toFixed(0)} m`}
+            </Text>
+            <Text style={styles.statsText}>
+              Steps: {steps.toLocaleString()}
+            </Text>
+          </View>
+        )}
+      </View>
 
       <View style={styles.controls}>
         <View style={styles.controlsRow}>
@@ -408,7 +423,6 @@ const styles = StyleSheet.create({
   zoomControls: {
     position: 'absolute', 
     right: 10,
-    top: 70,
     gap: 10,
   },
   zoomButton: {
@@ -458,14 +472,17 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     gap: 10,
   },
-  leaderboardButtonTopLeft: {
+  mapShortcuts: {
     position: 'absolute',
-    top: 50,
     left: 10,
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  shortcutButton: {
     backgroundColor: '#0f3460',
     width: 50,
     height: 50,
-    borderRadius: 8, // Square-like with slight rounding
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -474,10 +491,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 5,
   },
-  statsContainerTopLeft: {
-    position: 'absolute',
-    top: 105, // 55 (top) + 40 (height) + 10 (gap)
-    left: 10,
+  trackingStats: {
     backgroundColor: 'rgba(0,0,0,0.7)',
     paddingHorizontal: 16,
     paddingVertical: 12,
